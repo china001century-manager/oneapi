@@ -44,6 +44,7 @@ async function sendWithAgentMail(message, envelopeRecipients) {
 }
 
 const smtp = new SMTPServer({
+  allowInsecureAuth: true,
   authMethods: ['PLAIN', 'LOGIN'],
   authOptional: false,
   disabledCommands: ['STARTTLS'],
