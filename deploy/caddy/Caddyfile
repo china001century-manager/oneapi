@@ -1,0 +1,44 @@
+{
+  email admin@wboke.com
+  servers {
+    protocols h1 h2 h3
+  }
+}
+
+(common_security) {
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    -Server
+  }
+  encode zstd gzip
+}
+
+(new_api_proxy) {
+  reverse_proxy new-api:3000 {
+    transport http {
+      keepalive 90s
+      read_timeout 310s
+      write_timeout 310s
+    }
+  }
+}
+
+www.wboke.com {
+  import common_security
+
+  @new_api path /api/* /dashboard* /keys* /wallet* /usage-logs* /users* /system-settings* /reset* /oauth/* /setup* /assets/* /logo.png /favicon.ico /manifest.json
+  handle @new_api {
+    import new_api_proxy
+  }
+
+  handle {
+    reverse_proxy web:8080
+  }
+}
+
+api.wboke.com {
+  import common_security
+  import new_api_proxy
+}

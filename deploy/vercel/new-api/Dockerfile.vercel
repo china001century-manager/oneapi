@@ -1,0 +1,9 @@
+FROM calciumion/new-api:v1.0.0-rc.21
+
+COPY start.sh /start.sh
+RUN chmod 755 /start.sh
+
+ENV TZ=Asia/Hong_Kong
+EXPOSE 3000
+
+ENTRYPOINT ["/start.sh"]

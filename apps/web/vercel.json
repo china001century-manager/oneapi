@@ -1,0 +1,79 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/api/:path*"
+    },
+    {
+      "source": "/dashboard/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/dashboard/:path*"
+    },
+    {
+      "source": "/keys/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/keys/:path*"
+    },
+    {
+      "source": "/wallet/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/wallet/:path*"
+    },
+    {
+      "source": "/usage-logs/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/usage-logs/:path*"
+    },
+    {
+      "source": "/users/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/users/:path*"
+    },
+    {
+      "source": "/system-settings/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/system-settings/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/assets/:path*"
+    },
+    {
+      "source": "/oauth/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/oauth/:path*"
+    },
+    {
+      "source": "/reset/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/reset/:path*"
+    },
+    {
+      "source": "/setup/:path*",
+      "destination": "https://wboke-new-api-test.vercel.app/setup/:path*"
+    },
+    {
+      "source": "/logo.png",
+      "destination": "https://wboke-new-api-test.vercel.app/logo.png"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "https://wboke-new-api-test.vercel.app/favicon.ico"
+    },
+    {
+      "source": "/manifest.json",
+      "destination": "https://wboke-new-api-test.vercel.app/manifest.json"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}
