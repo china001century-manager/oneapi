@@ -1,0 +1,12 @@
+{
+  "name": "wboke-api-platform",
+  "private": true,
+  "packageManager": "pnpm@11.1.3",
+  "scripts": {
+    "dev": "pnpm --filter @wboke/desktop dev",
+    "dev:web": "pnpm --filter @wboke/web dev",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm --filter @wboke/desktop test",
+    "check": "pnpm -r --if-present check"
+  }
+}
