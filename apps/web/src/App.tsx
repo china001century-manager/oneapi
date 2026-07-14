@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { AuthPage } from './components/AuthPage';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://api.wboke.com/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://www.wboke.com/v1';
 
 const models = [
   { family: 'OpenAI', name: 'GPT Codex', input: 11.42, output: 91.36, status: '可用' },

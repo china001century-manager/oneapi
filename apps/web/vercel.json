@@ -6,59 +6,59 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/api/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/api/:path*"
     },
     {
       "source": "/dashboard/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/dashboard/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/dashboard/:path*"
     },
     {
       "source": "/keys/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/keys/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/keys/:path*"
     },
     {
       "source": "/wallet/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/wallet/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/wallet/:path*"
     },
     {
       "source": "/usage-logs/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/usage-logs/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/usage-logs/:path*"
     },
     {
       "source": "/users/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/users/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/users/:path*"
     },
     {
       "source": "/system-settings/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/system-settings/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/system-settings/:path*"
     },
     {
       "source": "/assets/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/assets/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/assets/:path*"
     },
     {
       "source": "/oauth/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/oauth/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/oauth/:path*"
     },
     {
       "source": "/reset/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/reset/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/reset/:path*"
     },
     {
       "source": "/setup/:path*",
-      "destination": "https://wboke-new-api-test.vercel.app/setup/:path*"
+      "destination": "https://wbokedesktop-production.up.railway.app/setup/:path*"
     },
     {
       "source": "/logo.png",
-      "destination": "https://wboke-new-api-test.vercel.app/logo.png"
+      "destination": "https://wbokedesktop-production.up.railway.app/logo.png"
     },
     {
       "source": "/favicon.ico",
-      "destination": "https://wboke-new-api-test.vercel.app/favicon.ico"
+      "destination": "https://wbokedesktop-production.up.railway.app/favicon.ico"
     },
     {
       "source": "/manifest.json",
-      "destination": "https://wboke-new-api-test.vercel.app/manifest.json"
+      "destination": "https://wbokedesktop-production.up.railway.app/manifest.json"
     },
     {
       "source": "/(.*)",
