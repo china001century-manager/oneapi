@@ -47,8 +47,6 @@ const smtp = new SMTPServer({
   allowInsecureAuth: true,
   authMethods: ['PLAIN', 'LOGIN'],
   authOptional: false,
-  disabledCommands: ['STARTTLS'],
-  hideSTARTTLS: true,
   logger: false,
   size: 2 * 1024 * 1024,
   onAuth(auth, _session, callback) {
