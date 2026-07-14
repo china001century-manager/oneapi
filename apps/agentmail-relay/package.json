@@ -1,0 +1,15 @@
+{
+  "name": "@wboke/agentmail-relay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "check": "node --check src/server.js && node --check src/message.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "mailparser": "^3.7.4",
+    "smtp-server": "^3.14.0"
+  }
+}
