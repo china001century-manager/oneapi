@@ -41,12 +41,92 @@
       "destination": "https://wbokedesktop-production.up.railway.app/dashboard/:path*"
     },
     {
+      "source": "/channels",
+      "destination": "https://wbokedesktop-production.up.railway.app/channels"
+    },
+    {
+      "source": "/channels/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/channels/:path*"
+    },
+    {
+      "source": "/chat",
+      "destination": "https://wbokedesktop-production.up.railway.app/chat"
+    },
+    {
+      "source": "/chat/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/chat/:path*"
+    },
+    {
+      "source": "/chat2link",
+      "destination": "https://wbokedesktop-production.up.railway.app/chat2link"
+    },
+    {
+      "source": "/chat2link/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/chat2link/:path*"
+    },
+    {
+      "source": "/console",
+      "destination": "https://wbokedesktop-production.up.railway.app/console"
+    },
+    {
+      "source": "/console/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/console/:path*"
+    },
+    {
       "source": "/keys",
       "destination": "https://wbokedesktop-production.up.railway.app/keys"
     },
     {
       "source": "/keys/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/keys/:path*"
+    },
+    {
+      "source": "/models",
+      "destination": "https://wbokedesktop-production.up.railway.app/models"
+    },
+    {
+      "source": "/models/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/models/:path*"
+    },
+    {
+      "source": "/playground",
+      "destination": "https://wbokedesktop-production.up.railway.app/playground"
+    },
+    {
+      "source": "/playground/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/playground/:path*"
+    },
+    {
+      "source": "/profile",
+      "destination": "https://wbokedesktop-production.up.railway.app/profile"
+    },
+    {
+      "source": "/profile/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/profile/:path*"
+    },
+    {
+      "source": "/redemption-codes",
+      "destination": "https://wbokedesktop-production.up.railway.app/redemption-codes"
+    },
+    {
+      "source": "/redemption-codes/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/redemption-codes/:path*"
+    },
+    {
+      "source": "/subscriptions",
+      "destination": "https://wbokedesktop-production.up.railway.app/subscriptions"
+    },
+    {
+      "source": "/subscriptions/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/subscriptions/:path*"
+    },
+    {
+      "source": "/system-info",
+      "destination": "https://wbokedesktop-production.up.railway.app/system-info"
+    },
+    {
+      "source": "/system-info/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/system-info/:path*"
     },
     {
       "source": "/wallet",
