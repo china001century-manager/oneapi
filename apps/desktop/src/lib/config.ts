@@ -1,6 +1,6 @@
 export const appConfig = {
   portalOrigin: import.meta.env.VITE_PORTAL_ORIGIN ?? 'https://www.wboke.com',
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://api.wboke.com/v1',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://www.wboke.com/v1',
   storeUrl: import.meta.env.VITE_STORE_URL ?? 'https://www.wboke.com/recharge',
   demoMode: import.meta.env.DEV && import.meta.env.VITE_DEMO_MODE !== 'false',
 } as const;

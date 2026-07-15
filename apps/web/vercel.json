@@ -5,44 +5,104 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api",
+      "destination": "https://wbokedesktop-production.up.railway.app/api"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/v1",
+      "destination": "https://wbokedesktop-production.up.railway.app/v1"
+    },
+    {
+      "source": "/v1/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/v1/:path*"
+    },
+    {
+      "source": "/v1beta",
+      "destination": "https://wbokedesktop-production.up.railway.app/v1beta"
+    },
+    {
+      "source": "/v1beta/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/v1beta/:path*"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "https://wbokedesktop-production.up.railway.app/dashboard"
     },
     {
       "source": "/dashboard/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/dashboard/:path*"
     },
     {
+      "source": "/keys",
+      "destination": "https://wbokedesktop-production.up.railway.app/keys"
+    },
+    {
       "source": "/keys/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/keys/:path*"
+    },
+    {
+      "source": "/wallet",
+      "destination": "https://wbokedesktop-production.up.railway.app/wallet"
     },
     {
       "source": "/wallet/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/wallet/:path*"
     },
     {
+      "source": "/usage-logs",
+      "destination": "https://wbokedesktop-production.up.railway.app/usage-logs"
+    },
+    {
       "source": "/usage-logs/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/usage-logs/:path*"
+    },
+    {
+      "source": "/users",
+      "destination": "https://wbokedesktop-production.up.railway.app/users"
     },
     {
       "source": "/users/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/users/:path*"
     },
     {
+      "source": "/system-settings",
+      "destination": "https://wbokedesktop-production.up.railway.app/system-settings"
+    },
+    {
       "source": "/system-settings/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/system-settings/:path*"
+    },
+    {
+      "source": "/assets",
+      "destination": "https://wbokedesktop-production.up.railway.app/assets"
     },
     {
       "source": "/assets/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/assets/:path*"
     },
     {
+      "source": "/oauth",
+      "destination": "https://wbokedesktop-production.up.railway.app/oauth"
+    },
+    {
       "source": "/oauth/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/oauth/:path*"
     },
     {
+      "source": "/reset",
+      "destination": "https://wbokedesktop-production.up.railway.app/reset"
+    },
+    {
       "source": "/reset/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/reset/:path*"
+    },
+    {
+      "source": "/setup",
+      "destination": "https://wbokedesktop-production.up.railway.app/setup"
     },
     {
       "source": "/setup/:path*",

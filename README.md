@@ -8,6 +8,18 @@ Commercial, invitation-only AI API access built around an independently deployed
 - `apps/web`: WBoke public website. Account and billing actions hand off to New API.
 - `deploy`: pinned New API, PostgreSQL, Redis, and Caddy deployment for Hong Kong.
 - `docs/plans`: validated product and architecture decisions.
+- `docs/operations`: user, administrator, and project handover documentation.
+
+## Current trial deployment
+
+- Public portal: `https://www.wboke.com` (domain cutover completed on 2026-07-15).
+- New API trial origin: `https://wbokedesktop-production.up.railway.app`.
+- Public website trial origin: `https://wboke-web-test.vercel.app`.
+- SMTP relay: Railway private service `agentmail-relay`; it has no public SMTP endpoint.
+- Source repository: `https://github.com/china001century-manager/oneapi`.
+
+The authoritative operational record is in `docs/operations/`. Do not store passwords,
+API keys, database credentials, or DNS provider tokens in Git.
 
 ## Local development
 
