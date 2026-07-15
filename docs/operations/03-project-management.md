@@ -313,7 +313,7 @@ Git Commit=<COMMIT_SHA>
 
 ```text
 版本=web-trial-2026-07-15
-Git Commit=<本轮提交后填写>
+Git Commit=64822a7e35f172aa80dada6bed30a98dc484a582
 发布时间=2026-07-15 Asia/Shanghai
 发布平台=Vercel
 部署 ID=dpl_5hm166GdvbzxWwrxWebRNowT3cGi
