@@ -60,6 +60,8 @@ WBoke 是基于 New API 的商业 AI API 服务。用户通过个人邮箱注册
 - 上游渠道数：`0`
 - 兑换码数：`0`
 - 模型价格库：约 `281` 条预置数据，未与真实渠道逐项核对
+- 官网公开价格接口 `/api/pricing` 当前返回空数据；首页不展示硬编码价格，待上游和售价配置完成后再接入实时价格。
+- VIP Token OpenAI 兼容端点已用临时 Key 验证 `gpt-5.5` Responses 与 Chat Completions 均成功；Anthropic Messages 连续返回 503，禁止启用。
 
 ## 客户端真实状态
 
@@ -111,6 +113,14 @@ WBoke 是基于 New API 的商业 AI API 服务。用户通过个人邮箱注册
 - 安全约束：公开登录接口不能泄露账号是否存在，但管理员后台必须能区分密码错误、禁用、封禁和邮箱未验证。
 - 待处理：用户侧提供安全但可行动的提示和“忘记密码”；管理员侧记录精确原因、时间、IP 和用户状态。
 - 验收标准：用户提示不造成账号枚举，管理员日志可定位真实原因。
+
+### ISSUE-006：用户登录后 `/dashboard` 白屏（已定位并修复代码）
+
+- 优先级：P0，阻断用户控制台。
+- 根因：New API 的控制台 HTML 引用 `/static/js/*` 和 `/static/css/*`，Vercel 未代理 `/static`，返回了 WBoke 首页 HTML，导致浏览器无法执行 JavaScript。
+- 证据：`/dashboard` 返回 200 且包含 `/static/js/index.1259bebe92.js`；正式域名的该 JS 地址返回 `text/html`，Railway 原站返回 `text/javascript`。
+- 修复：Vercel 增加 `/static` 精确和通配 rewrite；香港 Caddy 同步增加 `/static`、`/v1` 和 `/v1beta` 路由。
+- 验收标准：所有 `/static/js/*` 返回 JavaScript、`/static/css/*` 返回 CSS；登录后控制台可见且浏览器控制台没有 MIME 类型错误。
 
 ## 本轮变更边界
 

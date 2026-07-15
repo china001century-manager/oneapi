@@ -85,6 +85,14 @@
       "destination": "https://wbokedesktop-production.up.railway.app/assets/:path*"
     },
     {
+      "source": "/static",
+      "destination": "https://wbokedesktop-production.up.railway.app/static"
+    },
+    {
+      "source": "/static/:path*",
+      "destination": "https://wbokedesktop-production.up.railway.app/static/:path*"
+    },
+    {
       "source": "/oauth",
       "destination": "https://wbokedesktop-production.up.railway.app/oauth"
     },

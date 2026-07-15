@@ -28,7 +28,7 @@
 www.wboke.com {
   import common_security
 
-  @new_api path /api/* /dashboard* /keys* /wallet* /usage-logs* /users* /system-settings* /reset* /oauth/* /setup* /assets/* /logo.png /favicon.ico /manifest.json
+  @new_api path /api /api/* /v1 /v1/* /v1beta /v1beta/* /dashboard* /keys* /wallet* /usage-logs* /users* /system-settings* /reset* /oauth /oauth/* /setup* /assets /assets/* /static /static/* /logo.png /favicon.ico /manifest.json
   handle @new_api {
     import new_api_proxy
   }

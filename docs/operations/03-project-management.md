@@ -231,7 +231,7 @@ SESSION_COOKIE_SECURE=true
 历史故障与防复发：
 
 1. Railway 根目录已经是 `/apps/agentmail-relay`，Dockerfile 内 `COPY` 必须相对于该目录，不能再次写 `apps/agentmail-relay/...`。
-2. Railway 构建环境曾在 `corepack prepare pnpm` 失败，Relay Dockerfile 使用 Node 20 + `npm install --omit=dev`。
+2. Railway 构建环境曾在 `corepack prepare pnpm` 失败，Relay Dockerfile 使用 Node 20 + 锁定依赖的 `npm ci --omit=dev`。
 3. New API 的 Go SMTP 客户端拒绝明文传输认证信息，必须使用 STARTTLS。
 4. Relay 使用自签名证书，因此 New API 仅对 Railway 私网 Relay 开启“跳过 TLS 证书验证”。
 5. `allowInsecureAuth` 不是公网安全方案；Relay 必须保持仅私网可见。

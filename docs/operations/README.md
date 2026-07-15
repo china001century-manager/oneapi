@@ -8,6 +8,7 @@
 2. [用户使用手册](./01-user-guide.md)
 3. [管理员操作手册](./02-admin-runbook.md)
 4. [项目管理与重新部署手册](./03-project-management.md)
+5. [上游模型接入与渠道管理指南](./04-upstream-channel-guide.md)
 
 ## 安全规则
 

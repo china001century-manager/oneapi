@@ -124,10 +124,10 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   return (
     <main className="auth-shell">
       <section className="auth-context">
-        <a className="auth-brand" href="/"><span>W</span><strong>WBoke API</strong></a>
+        <a className="auth-brand" href="/"><img className="auth-logo" src="/brand-logo.png" alt="" /><strong>六脉神剑API</strong></a>
         <div>
           <p className="section-label">安全账户</p>
-          <h1>{mode === 'sign-up' ? '创建你的 API 账户' : '登录 WBoke API'}</h1>
+          <h1>{mode === 'sign-up' ? '创建你的 API 账户' : '登录六脉神剑API'}</h1>
           <p>一个账户管理余额、API Key、消费记录与桌面端配置。桌面客户端使用同一账号登录。</p>
         </div>
         <div className="auth-trust">

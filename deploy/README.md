@@ -5,7 +5,7 @@ This deployment pins New API to `v1.0.0-rc.21` instead of following `latest`. Th
 ## Start
 
 1. Point `www.wboke.com` and `api.wboke.com` A/AAAA records to the Hong Kong host.
-2. Copy `.env.example` to `.env` and replace every secret.
+2. Copy `.env.example` to `.env` and replace every secret, including the AgentMail relay credentials.
 3. Restrict SSH, enable host-level firewall rules for 22/80/443, and keep PostgreSQL and Redis unexposed.
 4. Start the stack:
 
@@ -30,10 +30,12 @@ Configure these through the New API administrator console:
 ## Public website routing
 
 - `https://www.wboke.com/` serves the WBoke public website.
-- New API continues to serve `/api/*`, `/login`, `/register`, `/console*`, OAuth, setup, and its own frontend assets.
+- New API continues to serve `/api/*`, `/v1/*`, `/v1beta/*`, dashboard routes, OAuth, setup, and its `/static/*` frontend assets.
 - `https://api.wboke.com` sends all traffic to New API.
 
 When New API adds a new top-level authentication or console route, add it to the `@new_api` matcher in `caddy/Caddyfile` before exposing that feature.
+
+The Docker Compose stack includes the private `agentmail-relay` service. After migration, update New API SMTP settings to host `agentmail-relay`, port `2525`, STARTTLS enabled, and the credentials from `deploy/.env`.
 
 Do not enable a channel for paid users until its status is `approved`. Official providers that do not authorize the Hong Kong company or service region remain disabled.
 

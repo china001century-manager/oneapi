@@ -6,7 +6,8 @@
     "dev": "pnpm --filter @wboke/desktop dev",
     "dev:web": "pnpm --filter @wboke/web dev",
     "build": "pnpm -r --if-present build",
-    "test": "pnpm --filter @wboke/desktop test",
-    "check": "pnpm -r --if-present check"
+    "test": "pnpm -r --if-present test",
+    "check": "pnpm -r --if-present check && node scripts/verify-deploy.mjs",
+    "verify:deploy": "node scripts/verify-deploy.mjs"
   }
 }
