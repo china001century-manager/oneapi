@@ -9,6 +9,10 @@
       "destination": "https://wbokedesktop-production.up.railway.app/api"
     },
     {
+      "source": "/api/:path*/",
+      "destination": "https://wbokedesktop-production.up.railway.app/api/:path*/"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://wbokedesktop-production.up.railway.app/api/:path*"
     },

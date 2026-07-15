@@ -38,6 +38,15 @@ for (const route of requiredVercelRoutes) {
   }
 }
 
+const trailingApi = sources.indexOf('/api/:path*/');
+const apiWildcard = sources.indexOf('/api/:path*');
+if (trailingApi < 0 || trailingApi > apiWildcard) {
+  throw new Error('Trailing-slash API rewrite must precede the general API wildcard');
+}
+if (vercel.rewrites[trailingApi].destination !== `${railwayOrigin}/api/:path*/`) {
+  throw new Error('Trailing-slash API rewrite does not preserve the slash at the Railway origin');
+}
+
 if (sources.at(-1) !== '/(.*)') {
   throw new Error('The website fallback must be the final Vercel rewrite');
 }
