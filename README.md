@@ -8,7 +8,6 @@ Commercial, invitation-only AI API access built around an independently deployed
 - `apps/web`: WBoke public website. Account and billing actions hand off to New API.
 - `deploy`: pinned New API, PostgreSQL, Redis, and Caddy deployment for Hong Kong.
 - `docs/plans`: validated product and architecture decisions.
-- `docs/operations`: user, administrator, and project handover documentation.
 
 ## Current trial deployment
 
@@ -18,8 +17,7 @@ Commercial, invitation-only AI API access built around an independently deployed
 - SMTP relay: Railway private service `agentmail-relay`; it has no public SMTP endpoint.
 - Source repository: `https://github.com/china001century-manager/oneapi`.
 
-The authoritative operational record is in `docs/operations/`. Do not store passwords,
-API keys, database credentials, or DNS provider tokens in Git.
+Do not store passwords, API keys, database credentials, or DNS provider tokens in Git.
 
 ## Local development
 

@@ -11,3 +11,4 @@ target/
 .DS_Store
 Thumbs.db
 apps/desktop/src-tauri/gen/
+docs/operations/
