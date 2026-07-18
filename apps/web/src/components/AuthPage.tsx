@@ -28,6 +28,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [status, setStatus] = useState(initialStatus);
   const [statusReady, setStatusReady] = useState(false);
   const [username, setUsername] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState(params.get('email') ?? '');
   const [email, setEmail] = useState(params.get('email') ?? '');
   const [password, setPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -102,7 +103,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         window.location.assign(`/sign-in?registered=1&email=${encodeURIComponent(email.trim())}`);
         return;
       }
-      const result = await login(email.trim(), password, turnstileToken);
+      const result = await login(loginIdentifier.trim(), password, turnstileToken);
       if (result.require_2fa) {
         setRequiresTwoFactor(true);
         setPassword('');
@@ -116,7 +117,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
     } finally {
       setPending(false);
     }
-  }, [completeLogin, email, invitationCode, mode, password, requiresTwoFactor, resetChallenge, status.turnstile_check, turnstileToken, twoFactorCode, username, verificationCode]);
+  }, [completeLogin, email, invitationCode, loginIdentifier, mode, password, requiresTwoFactor, resetChallenge, status.turnstile_check, turnstileToken, twoFactorCode, username, verificationCode]);
 
   const registrationDisabled = mode === 'sign-up' && statusReady && (!status.register_enabled || !status.password_register_enabled);
   const loginDisabled = mode === 'sign-in' && statusReady && !status.password_login_enabled;
@@ -151,7 +152,11 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           ) : (
             <>
               {mode === 'sign-up' && <label><span>用户名</span><input value={username} onChange={(event) => setUsername(event.target.value)} minLength={2} maxLength={20} autoComplete="username" required /></label>}
-              <label><span>个人邮箱</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={50} required /></label>
+              {mode === 'sign-up' ? (
+                <label><span>个人邮箱</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={50} required /></label>
+              ) : (
+                <label><span>邮箱或用户名</span><input value={loginIdentifier} onChange={(event) => setLoginIdentifier(event.target.value)} autoComplete="username" maxLength={50} required /></label>
+              )}
               {mode === 'sign-up' && status.email_verification && (
                 <label><span>邮箱验证码</span><div className="verification-input"><input value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" maxLength={8} required /><button type="button" onClick={() => void sendCode()} disabled={sendingCode || cooldown > 0}>{sendingCode ? '发送中' : cooldown > 0 ? `${cooldown}s` : '发送验证码'}</button></div></label>
               )}
