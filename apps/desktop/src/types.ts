@@ -1,4 +1,4 @@
-export type ViewId = 'overview' | 'tools' | 'models' | 'account';
+export type ViewId = 'overview' | 'tools' | 'account';
 
 export interface Account {
   id: number;
@@ -7,30 +7,10 @@ export interface Account {
   group: string;
   balanceCny: number;
   apiKeyMasked: string;
-  apiKey?: string;
   baseUrl: string;
-  groupMultiplier: number;
 }
 
-export interface ModelPrice {
-  id: string;
-  name: string;
-  family: 'OpenAI' | 'Anthropic' | 'Gemini' | 'DeepSeek' | 'GLM';
-  inputCnyPerMillion: number;
-  outputCnyPerMillion: number;
-  latencyMs: number;
-  status: 'available' | 'degraded' | 'paused';
-}
-
-export interface UsageItem {
-  id: string;
-  model: string;
-  time: string;
-  tokens: number;
-  costCny: number;
-}
-
-export type ToolId = 'codex-cli' | 'claude-code' | 'gemini-cli';
+export type ToolId = 'codex-cli' | 'claude-code' | 'gemini-cli' | 'cc-switch';
 
 export interface ToolState {
   id: ToolId;
@@ -38,13 +18,13 @@ export interface ToolState {
   description: string;
   command: string;
   installed: boolean;
+  version?: string;
   configPath: string;
-  adapterStatus: 'preview' | 'available';
+  adapterStatus: 'available' | 'unsupported';
+  restoreAvailable: boolean;
 }
 
 export interface DashboardSnapshot {
   account: Account;
-  models: ModelPrice[];
-  usage: UsageItem[];
   syncedAt: string;
 }

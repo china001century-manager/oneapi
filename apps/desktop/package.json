@@ -8,7 +8,8 @@
     "tauri": "tauri",
     "build": "tsc -b && vite build",
     "check": "tsc -b --pretty false",
-    "test": "vitest run"
+    "test": "vitest run",
+    "package:rc": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/package-desktop-rc.ps1"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.1",

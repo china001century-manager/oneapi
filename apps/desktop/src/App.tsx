@@ -1,52 +1,47 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ArrowUpRight,
   Check,
   ChevronRight,
   CircleUserRound,
-  Clipboard,
-  Code2,
   Coins,
   Copy,
   ExternalLink,
-  Gauge,
+  Eye,
+  EyeOff,
   KeyRound,
   LayoutDashboard,
   LoaderCircle,
   LogOut,
   RefreshCw,
-  ServerCog,
+  RotateCcw,
   Settings2,
   ShieldCheck,
   WalletCards,
   Wrench,
   X,
 } from 'lucide-react';
-import type { DashboardSnapshot, ModelPrice, ToolState, ViewId } from './types';
+import type { DashboardSnapshot, ToolState, ViewId } from './types';
 import { newApiClient } from './lib/api';
 import { appConfig } from './lib/config';
-import { applyToolConfig, detectTools, openOfficialUrl, openRecharge } from './lib/platform';
+import { applyToolConfig, detectTools, openOfficialUrl, openRecharge, restoreToolConfig } from './lib/platform';
 import { StatusBadge } from './components/StatusBadge';
 import './styles.css';
 
 const navItems: Array<{ id: ViewId; label: string; icon: typeof LayoutDashboard }> = [
   { id: 'overview', label: '概览', icon: LayoutDashboard },
   { id: 'tools', label: '开发工具', icon: Wrench },
-  { id: 'models', label: '模型与价格', icon: ServerCog },
   { id: 'account', label: '账户', icon: CircleUserRound },
 ];
 
-function formatCny(value: number, digits = 2): string {
-  return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', minimumFractionDigits: digits }).format(value);
-}
-
-function formatTokens(value: number): string {
-  return new Intl.NumberFormat('zh-CN', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+function formatCny(value: number): string {
+  return new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY' }).format(value);
 }
 
 function LoginScreen({ onLogin, onVerifyTwoFactor }: { onLogin: (email: string, password: string) => Promise<boolean>; onVerifyTwoFactor: (code: string) => Promise<void> }) {
   const [email, setEmail] = useState(appConfig.demoMode ? 'member@wboke.com' : '');
   const [password, setPassword] = useState(appConfig.demoMode ? 'wboke-demo' : '');
+  const [showPassword, setShowPassword] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [error, setError] = useState('');
@@ -59,12 +54,9 @@ function LoginScreen({ onLogin, onVerifyTwoFactor }: { onLogin: (email: string, 
     try {
       if (requiresTwoFactor) {
         await onVerifyTwoFactor(twoFactorCode.trim());
-      } else {
-        const needsCode = await onLogin(email.trim(), password);
-        if (needsCode) {
-          setRequiresTwoFactor(true);
-          setPassword('');
-        }
+      } else if (await onLogin(email.trim(), password)) {
+        setRequiresTwoFactor(true);
+        setPassword('');
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '登录失败');
@@ -73,22 +65,25 @@ function LoginScreen({ onLogin, onVerifyTwoFactor }: { onLogin: (email: string, 
     }
   }, [email, onLogin, onVerifyTwoFactor, password, requiresTwoFactor, twoFactorCode]);
 
+  const openRegistration = useCallback(() => void openOfficialUrl(`${appConfig.portalOrigin}/sign-up`), []);
+  const openReset = useCallback(() => void openOfficialUrl(`${appConfig.portalOrigin}/reset`), []);
+
   return (
     <main className="login-shell">
-      <section className="login-brand" aria-label="WBoke API">
-        <div className="brand-lockup brand-lockup--large"><span>W</span><strong>WBoke API</strong></div>
+      <section className="login-brand" aria-label="六脉神剑API">
+        <div className="brand-lockup brand-lockup--large"><span>六</span><strong>六脉神剑API</strong></div>
         <div className="login-brand__copy">
-          <p className="eyebrow">固定企业网关</p>
-          <h1>开发工具的统一 API 入口</h1>
-          <p>账户、额度与模型价格由公司网关统一管理。</p>
+          <p className="eyebrow">Windows 客户端</p>
+          <h1>登录并配置开发工具</h1>
+          <p>账户与额度由正式网关统一管理。</p>
         </div>
-        <div className="login-brand__meta"><ShieldCheck size={18} /> 香港节点 · HTTPS</div>
+        <div className="login-brand__meta"><ShieldCheck size={18} /> HTTPS · www.wboke.com</div>
       </section>
       <section className="login-panel">
         <form className="login-form" onSubmit={submit}>
           <div>
             <p className="eyebrow">{requiresTwoFactor ? '二次验证' : '账户登录'}</p>
-            <h2>{requiresTwoFactor ? '输入身份验证器代码' : '进入控制台'}</h2>
+            <h2>{requiresTwoFactor ? '输入身份验证器代码' : '进入客户端'}</h2>
           </div>
           {appConfig.demoMode && <div className="demo-notice">开发演示模式</div>}
           {requiresTwoFactor ? (
@@ -104,7 +99,12 @@ function LoginScreen({ onLogin, onVerifyTwoFactor }: { onLogin: (email: string, 
               </label>
               <label>
                 <span>密码</span>
-                <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={20} required />
+                <span className="password-field">
+                  <input type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={64} required />
+                  <button type="button" className="password-toggle" title={showPassword ? '隐藏密码' : '显示密码'} aria-label={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword((value) => !value)}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
               </label>
             </>
           )}
@@ -113,7 +113,12 @@ function LoginScreen({ onLogin, onVerifyTwoFactor }: { onLogin: (email: string, 
             {pending ? <LoaderCircle className="spin" size={18} /> : <ArrowUpRight size={18} />}
             {pending ? '正在验证' : requiresTwoFactor ? '完成验证' : '登录'}
           </button>
-          {!requiresTwoFactor && <button className="text-link" type="button" onClick={() => void openOfficialUrl(`${appConfig.portalOrigin}/sign-up`)}>注册账户（邀请码可选） <ExternalLink size={14} /></button>}
+          {!requiresTwoFactor && (
+            <div className="login-links">
+              <button className="text-link" type="button" onClick={openReset}>忘记密码 <ExternalLink size={14} /></button>
+              <button className="text-link" type="button" onClick={openRegistration}>注册账户 <ExternalLink size={14} /></button>
+            </div>
+          )}
         </form>
       </section>
     </main>
@@ -130,78 +135,107 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   return <button className="icon-button" type="button" title={label} aria-label={label} onClick={() => void copy()}>{copied ? <Check size={17} /> : <Copy size={17} />}</button>;
 }
 
-function Overview({ snapshot, syncing, onSync, onRecharge }: { snapshot: DashboardSnapshot; syncing: boolean; onSync: () => void; onRecharge: () => void }) {
-  const availableModels = snapshot.models.filter((model) => model.status === 'available').length;
+function Overview({ snapshot, syncing, onSync }: { snapshot: DashboardSnapshot; syncing: boolean; onSync: () => void }) {
+  const openKeys = useCallback(() => void openOfficialUrl(`${appConfig.portalOrigin}/keys`), []);
+  const openWallet = useCallback(() => void openOfficialUrl(`${appConfig.portalOrigin}/wallet`), []);
+  const openUsage = useCallback(() => void openOfficialUrl(`${appConfig.portalOrigin}/usage-logs`), []);
   return (
     <div className="page-stack">
       <header className="page-heading">
-        <div><p className="eyebrow">账户概览</p><h1>下午好，{snapshot.account.displayName}</h1></div>
+        <div><p className="eyebrow">账户概览</p><h1>{snapshot.account.displayName}</h1></div>
         <div className="heading-actions">
           <button className="button button--secondary" type="button" onClick={onSync} disabled={syncing}><RefreshCw className={syncing ? 'spin' : ''} size={17} />同步</button>
-          <button className="button button--primary" type="button" onClick={onRecharge}><Coins size={17} />充值</button>
+          <button className="button button--primary" type="button" onClick={() => void openRecharge()}><Coins size={17} />购买兑换码</button>
         </div>
       </header>
 
       <section className="balance-band">
         <div className="balance-main"><span>可用余额</span><strong>{formatCny(snapshot.account.balanceCny)}</strong><small>最近同步：{snapshot.syncedAt}</small></div>
-        <div className="metric"><span>可用模型</span><strong>{availableModels}</strong><small>共 {snapshot.models.length} 个</small></div>
-        <div className="metric"><span>当前倍率</span><strong>{snapshot.account.groupMultiplier.toFixed(2)}×</strong><small>{snapshot.account.group}</small></div>
+        <div className="metric"><span>用户组</span><strong>{snapshot.account.group}</strong><small>{snapshot.account.email}</small></div>
+        <div className="metric"><span>专用 Key</span><strong>已就绪</strong><small>{snapshot.account.apiKeyMasked}</small></div>
       </section>
 
       <div className="overview-grid">
         <section className="surface endpoint-panel">
-          <div className="section-title"><div><p className="eyebrow">连接信息</p><h2>企业 API</h2></div><StatusBadge tone="success">连接正常</StatusBadge></div>
+          <div className="section-title"><div><p className="eyebrow">连接信息</p><h2>OpenAI 兼容端点</h2></div><StatusBadge tone="success">服务在线</StatusBadge></div>
           <dl className="connection-list">
             <div><dt>Base URL</dt><dd><code>{snapshot.account.baseUrl}</code><CopyButton value={snapshot.account.baseUrl} label="复制 Base URL" /></dd></div>
-            <div><dt>API Key</dt><dd><code>{snapshot.account.apiKeyMasked}</code><CopyButton value={snapshot.account.apiKey ?? snapshot.account.apiKeyMasked} label="复制 API Key" /></dd></div>
+            <div><dt>API Key</dt><dd><code>{snapshot.account.apiKeyMasked}</code></dd></div>
           </dl>
-          <button className="panel-link" type="button" onClick={() => void openOfficialUrl(`${appConfig.portalOrigin}/keys`)}>管理 API Key <ChevronRight size={16} /></button>
+          <button className="panel-link" type="button" onClick={openKeys}>管理 API Key <ChevronRight size={16} /></button>
         </section>
 
-        <section className="surface usage-panel">
-          <div className="section-title"><div><p className="eyebrow">最近消费</p><h2>用量流水</h2></div><Clipboard size={19} /></div>
-          <div className="usage-list">
-            {snapshot.usage.map((item) => <div className="usage-row" key={item.id}><div><strong>{item.model}</strong><span>{item.time}</span></div><div><span>{formatTokens(item.tokens)} tokens</span><strong>{formatCny(item.costCny)}</strong></div></div>)}
-          </div>
-          <button className="panel-link" type="button" onClick={() => void openOfficialUrl(`${appConfig.portalOrigin}/usage-logs`)}>查看全部记录 <ChevronRight size={16} /></button>
+        <section className="surface quick-actions">
+          <div className="section-title"><div><p className="eyebrow">网站账户</p><h2>额度与记录</h2></div><WalletCards size={19} /></div>
+          <button className="settings-link" type="button" onClick={openWallet}><WalletCards size={19} /><span><strong>钱包与兑换</strong><small>查看余额并输入兑换码</small></span><ChevronRight size={17} /></button>
+          <button className="settings-link" type="button" onClick={openUsage}><KeyRound size={19} /><span><strong>使用日志</strong><small>核对模型、Tokens 与扣费</small></span><ChevronRight size={17} /></button>
         </section>
       </div>
     </div>
   );
 }
 
-function ConfigDialog({ tool, account, onClose }: { tool: ToolState; account: DashboardSnapshot['account']; onClose: () => void }) {
-  const [applying, setApplying] = useState(false);
+function ConfigDialog({ tool, account, onClose, onChanged }: { tool: ToolState; account: DashboardSnapshot['account']; onClose: () => void; onChanged: () => void }) {
+  const [pending, setPending] = useState(false);
   const [result, setResult] = useState('');
-  const [applyError, setApplyError] = useState('');
+  const [error, setError] = useState('');
   const rows = tool.id === 'claude-code'
-    ? [['ANTHROPIC_BASE_URL', account.baseUrl.replace(/\/v1$/, '')], ['ANTHROPIC_AUTH_TOKEN', account.apiKeyMasked]]
+    ? [['ANTHROPIC_BASE_URL', appConfig.portalOrigin], ['ANTHROPIC_AUTH_TOKEN', account.apiKeyMasked]]
     : tool.id === 'gemini-cli'
-      ? [['GOOGLE_GEMINI_BASE_URL', account.baseUrl], ['GEMINI_API_KEY', account.apiKeyMasked]]
-      : [['OPENAI_BASE_URL', account.baseUrl], ['OPENAI_API_KEY', account.apiKeyMasked]];
+      ? [['GOOGLE_GEMINI_BASE_URL', appConfig.portalOrigin], ['GEMINI_API_KEY', account.apiKeyMasked]]
+      : tool.id === 'cc-switch'
+        ? [['供应商', '六脉神剑API'], ['目标', 'Codex / Claude / Gemini']]
+        : [['OpenAI Base URL', account.baseUrl], ['OPENAI_API_KEY', account.apiKeyMasked]];
+
   const apply = useCallback(async () => {
-    setApplying(true);
+    setPending(true);
     setResult('');
-    setApplyError('');
+    setError('');
     try {
       const value = await applyToolConfig(tool.id);
-      setResult(`已写入 ${value.writtenFiles.length} 个配置文件，并创建 ${value.backupFiles.length} 个备份。重启 ${tool.name} 后生效。`);
+      setResult(value.message);
+      onChanged();
     } catch (reason) {
-      setApplyError(reason instanceof Error ? reason.message : '配置失败');
+      setError(reason instanceof Error ? reason.message : '配置失败');
     } finally {
-      setApplying(false);
+      setPending(false);
     }
-  }, [tool.id, tool.name]);
+  }, [onChanged, tool.id]);
+
+  const restore = useCallback(async () => {
+    if (!window.confirm(`恢复 ${tool.name} 上一次配置？当前配置会被替换。`)) return;
+    setPending(true);
+    setResult('');
+    setError('');
+    try {
+      const files = await restoreToolConfig(tool.id);
+      setResult(`已恢复 ${files.length} 个配置文件。`);
+      onChanged();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '恢复失败');
+    } finally {
+      setPending(false);
+    }
+  }, [onChanged, tool.id, tool.name]);
+
+  const supported = tool.adapterStatus === 'available';
   return (
     <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="dialog" role="dialog" aria-modal="true" aria-labelledby="config-title" onMouseDown={(event) => event.stopPropagation()}>
         <header><div><p className="eyebrow">配置预览</p><h2 id="config-title">{tool.name}</h2></div><button className="icon-button" type="button" aria-label="关闭" title="关闭" onClick={onClose}><X size={19} /></button></header>
-        <div className="dialog-status"><StatusBadge tone={tool.installed ? 'success' : 'warning'}>{tool.installed ? '已检测到' : '未检测到'}</StatusBadge><span>{tool.configPath}</span></div>
-        <div className="config-preview">{rows.map(([key, value]) => <div key={key}><span>{key}</span><code>{value}</code></div>)}</div>
-        <p className="dialog-note">确认后将先备份现有文件，再写入 WBoke Base URL 与当前账户的 API Key。不会修改其他供应商配置。</p>
+        <div className="dialog-status">
+          <StatusBadge tone={!tool.installed || !supported ? 'warning' : 'success'}>{!tool.installed ? '未检测到' : supported ? '可配置' : '版本不兼容'}</StatusBadge>
+          <span>{tool.configPath}</span>
+        </div>
+        <div className="config-preview">{rows.map(([key, item]) => <div key={key}><span>{key}</span><code>{item}</code></div>)}</div>
+        <p className="dialog-note">应用前自动备份；完整 Key 只在 Rust 配置层使用，不进入界面状态。</p>
         {result && <p className="form-success" role="status">{result}</p>}
-        {applyError && <p className="form-error" role="alert">{applyError}</p>}
-        <footer><button className="button button--secondary" type="button" onClick={onClose}>关闭</button><button className="button button--primary" type="button" disabled={applying || !tool.installed} onClick={() => void apply()}>{applying ? <LoaderCircle className="spin" size={17} /> : <Settings2 size={17} />}{applying ? '正在配置' : tool.installed ? '备份并应用' : '未检测到工具'}</button></footer>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <footer>
+          <button className="button button--secondary" type="button" onClick={onClose}>关闭</button>
+          {tool.restoreAvailable && <button className="button button--secondary" type="button" disabled={pending} onClick={() => void restore()}><RotateCcw size={17} />恢复上次配置</button>}
+          <button className="button button--primary" type="button" disabled={pending || !tool.installed || !supported} onClick={() => void apply()}>{pending ? <LoaderCircle className="spin" size={17} /> : <Settings2 size={17} />}{pending ? '正在处理' : '备份并应用'}</button>
+        </footer>
       </section>
     </div>
   );
@@ -213,51 +247,31 @@ function ToolsView({ tools, snapshot, onRefresh }: { tools: ToolState[]; snapsho
     <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">本机接入</p><h1>开发工具</h1></div><button className="button button--secondary" type="button" onClick={onRefresh}><RefreshCw size={17} />重新检测</button></header>
       <section className="tool-list">
-        {tools.map((tool) => <article className="tool-row" key={tool.id}>
-          <div className="tool-icon"><Code2 size={21} /></div>
-          <div className="tool-copy"><h2>{tool.name}</h2><p>{tool.description}</p></div>
-          <div className="tool-path"><span>配置位置</span><code>{tool.configPath}</code></div>
-          <StatusBadge tone={tool.installed ? 'success' : 'warning'}>{tool.installed ? '已安装' : '未检测到'}</StatusBadge>
-          <button className="button button--secondary" type="button" onClick={() => setSelected(tool)}>查看配置 <ChevronRight size={16} /></button>
-        </article>)}
+        {tools.map((tool) => (
+          <article className="tool-row" key={tool.id}>
+            <div className="tool-icon"><Wrench size={21} /></div>
+            <div className="tool-copy"><h2>{tool.name}</h2><p>{tool.version ?? tool.description}</p></div>
+            <div className="tool-path"><span>配置位置</span><code>{tool.configPath}</code></div>
+            <StatusBadge tone={tool.installed && tool.adapterStatus === 'available' ? 'success' : 'warning'}>{!tool.installed ? '未安装' : tool.adapterStatus === 'available' ? '已支持' : '版本不兼容'}</StatusBadge>
+            <button className="button button--secondary" type="button" onClick={() => setSelected(tool)}>查看配置 <ChevronRight size={16} /></button>
+          </article>
+        ))}
       </section>
-      {selected && <ConfigDialog tool={selected} account={snapshot.account} onClose={() => setSelected(null)} />}
-    </div>
-  );
-}
-
-function ModelStatus({ model }: { model: ModelPrice }) {
-  if (model.status === 'available') return <StatusBadge tone="success">可用</StatusBadge>;
-  if (model.status === 'degraded') return <StatusBadge tone="warning">拥堵</StatusBadge>;
-  return <StatusBadge tone="neutral">暂停</StatusBadge>;
-}
-
-function ModelsView({ models }: { models: ModelPrice[] }) {
-  const [family, setFamily] = useState('全部');
-  const families = useMemo(() => ['全部', ...Array.from(new Set(models.map((model) => model.family)))], [models]);
-  const visible = family === '全部' ? models : models.filter((model) => model.family === family);
-  return (
-    <div className="page-stack">
-      <header className="page-heading"><div><p className="eyebrow">实时销售价格</p><h1>模型与价格</h1></div><StatusBadge tone="neutral">人民币 / 百万 tokens</StatusBadge></header>
-      <div className="segmented" aria-label="模型供应商">{families.map((item) => <button className={family === item ? 'active' : ''} type="button" key={item} onClick={() => setFamily(item)}>{item}</button>)}</div>
-      <section className="model-table" aria-label="模型价格表">
-        <div className="model-row model-row--head"><span>模型</span><span>输入价格</span><span>输出价格</span><span>延迟</span><span>状态</span></div>
-        {visible.map((model) => <div className="model-row" key={model.id}><div><strong>{model.name}</strong><small>{model.id}</small></div><code>{formatCny(model.inputCnyPerMillion)}</code><code>{formatCny(model.outputCnyPerMillion)}</code><span>{model.latencyMs} ms</span><ModelStatus model={model} /></div>)}
-      </section>
+      {selected && <ConfigDialog tool={selected} account={snapshot.account} onClose={() => setSelected(null)} onChanged={onRefresh} />}
     </div>
   );
 }
 
 function AccountView({ snapshot, onLogout }: { snapshot: DashboardSnapshot; onLogout: () => void }) {
   const items = [
-    { icon: WalletCards, title: '充值与兑换', detail: '官方链小铺充值码', action: () => void openRecharge() },
+    { icon: WalletCards, title: '购买兑换码', detail: '公司指定链小铺', action: () => void openRecharge() },
+    { icon: Coins, title: '钱包与兑换', detail: '充值、兑换和余额', action: () => void openOfficialUrl(`${appConfig.portalOrigin}/wallet`) },
     { icon: KeyRound, title: 'API Key 管理', detail: '创建、撤销与限额', action: () => void openOfficialUrl(`${appConfig.portalOrigin}/keys`) },
-    { icon: Gauge, title: '消费记录', detail: '模型、tokens 与扣费', action: () => void openOfficialUrl(`${appConfig.portalOrigin}/usage-logs`) },
   ];
   return (
     <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">账户设置</p><h1>{snapshot.account.email}</h1></div><button className="button button--danger" type="button" onClick={onLogout}><LogOut size={17} />退出登录</button></header>
-      <section className="account-summary"><div><span>用户组</span><strong>{snapshot.account.group}</strong></div><div><span>计费倍率</span><strong>{snapshot.account.groupMultiplier.toFixed(2)}×</strong></div><div><span>账户状态</span><strong className="success-text">正常</strong></div></section>
+      <section className="account-summary"><div><span>用户组</span><strong>{snapshot.account.group}</strong></div><div><span>API 地址</span><strong>{snapshot.account.baseUrl}</strong></div><div><span>账户状态</span><strong className="success-text">正常</strong></div></section>
       <section className="settings-list">{items.map(({ icon: Icon, title, detail, action }) => <button type="button" key={title} onClick={action}><Icon size={20} /><span><strong>{title}</strong><small>{detail}</small></span><ChevronRight size={18} /></button>)}</section>
     </div>
   );
@@ -266,19 +280,24 @@ function AccountView({ snapshot, onLogout }: { snapshot: DashboardSnapshot; onLo
 function AppShell({ snapshot, onLogout, onSync, syncing }: { snapshot: DashboardSnapshot; onLogout: () => void; onSync: () => void; syncing: boolean }) {
   const [view, setView] = useState<ViewId>('overview');
   const [tools, setTools] = useState<ToolState[]>([]);
-  const refreshTools = useCallback(() => { void detectTools().then(setTools); }, []);
+  const [toolError, setToolError] = useState('');
+  const refreshTools = useCallback(() => {
+    setToolError('');
+    void detectTools()
+      .then(setTools)
+      .catch(() => setToolError('本机工具检测失败，请重试或重启客户端。'));
+  }, []);
   useEffect(refreshTools, [refreshTools]);
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand-lockup"><span>W</span><strong>WBoke API</strong></div>
+        <div className="brand-lockup"><span>六</span><strong>六脉神剑API</strong></div>
         <nav>{navItems.map(({ id, label, icon: Icon }) => <button className={view === id ? 'active' : ''} type="button" key={id} aria-label={label} title={label} onClick={() => setView(id)}><Icon size={19} /><span>{label}</span></button>)}</nav>
-        <div className="sidebar-footer"><div className="connection-dot" /><div><strong>香港节点</strong><span>api.wboke.com</span></div></div>
+        <div className="sidebar-footer"><div className="connection-dot" /><div><strong>正式网关</strong><span>www.wboke.com</span></div></div>
       </aside>
       <main className="content">
-        {view === 'overview' && <Overview snapshot={snapshot} syncing={syncing} onSync={onSync} onRecharge={() => void openRecharge()} />}
-        {view === 'tools' && <ToolsView tools={tools} snapshot={snapshot} onRefresh={refreshTools} />}
-        {view === 'models' && <ModelsView models={snapshot.models} />}
+        {view === 'overview' && <Overview snapshot={snapshot} syncing={syncing} onSync={onSync} />}
+        {view === 'tools' && <>{toolError && <p className="form-error" role="alert">{toolError}</p>}<ToolsView tools={tools} snapshot={snapshot} onRefresh={refreshTools} /></>}
         {view === 'account' && <AccountView snapshot={snapshot} onLogout={onLogout} />}
       </main>
     </div>

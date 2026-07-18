@@ -12,3 +12,4 @@ target/
 Thumbs.db
 apps/desktop/src-tauri/gen/
 docs/operations/
+release/

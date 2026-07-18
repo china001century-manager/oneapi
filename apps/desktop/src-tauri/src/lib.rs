@@ -1,15 +1,13 @@
+mod tool_config;
+
 use reqwest::{Client, Method, Response};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
+use tool_config::{ConfigApplyResult, RestoreResult, ToolDetection};
 
 const PORTAL_ORIGIN: &str = "https://www.wboke.com";
-const API_BASE_URL: &str = "https://api.wboke.com/v1";
+const DESKTOP_TOKEN_NAME: &str = "六脉神剑 Desktop";
 
 #[derive(Clone)]
 struct AuthSession {
@@ -65,9 +63,25 @@ struct PortalUser {
 struct PortalToken {
     id: i64,
     status: i64,
+    #[serde(default)]
+    name: String,
+}
+
+fn active_desktop_token_id(tokens: &[PortalToken]) -> Result<Option<i64>, String> {
+    let ids: Vec<i64> = tokens
+        .iter()
+        .filter(|token| token.status == 1 && token.name == DESKTOP_TOKEN_NAME)
+        .map(|token| token.id)
+        .collect();
+    match ids.as_slice() {
+        [] => Ok(None),
+        [id] => Ok(Some(*id)),
+        _ => Err("检测到多个同名桌面端 API Key，请在网站保留一个后重试".to_string()),
+    }
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(bound(deserialize = "T: Deserialize<'de>"))]
 struct PageData<T> {
     #[serde(default)]
     items: Vec<T>,
@@ -87,17 +101,13 @@ struct Account {
     group: String,
     balance_cny: f64,
     api_key_masked: String,
-    api_key: String,
     base_url: String,
-    group_multiplier: f64,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DashboardSnapshot {
     account: Account,
-    models: Vec<Value>,
-    usage: Vec<Value>,
     synced_at: String,
 }
 
@@ -108,40 +118,20 @@ struct DesktopLoginResult {
     snapshot: Option<DashboardSnapshot>,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct ConfigApplyResult {
-    tool_id: String,
-    written_files: Vec<String>,
-    backup_files: Vec<String>,
-}
-
-fn command_exists(command: &str) -> bool {
-    #[cfg(target_os = "windows")]
-    let result = Command::new("where.exe").arg(command).output();
-
-    #[cfg(not(target_os = "windows"))]
-    let result = Command::new("which").arg(command).output();
-
-    result.map(|output| output.status.success()).unwrap_or(false)
-}
-
 #[tauri::command]
-fn detect_tools() -> HashMap<&'static str, bool> {
-    HashMap::from([
-        ("codex-cli", command_exists("codex")),
-        ("claude-code", command_exists("claude")),
-        ("gemini-cli", command_exists("gemini")),
-    ])
+fn detect_tools() -> Vec<ToolDetection> {
+    tool_config::detect_tools()
 }
 
 #[tauri::command]
 fn open_official_url(url: String) -> Result<(), String> {
     let parsed = url::Url::parse(&url).map_err(|_| "无效地址".to_string())?;
     let host = parsed.host_str().ok_or_else(|| "地址缺少域名".to_string())?;
-    let allowed_host = host == "wboke.com" || host.ends_with(".wboke.com");
+    let allowed_host = host == "wboke.com"
+        || host.ends_with(".wboke.com")
+        || host == "pay.ldxp.cn";
     if parsed.scheme() != "https" || !allowed_host {
-        return Err("仅允许打开 WBoke 官方 HTTPS 地址".to_string());
+        return Err("仅允许打开六脉神剑官网或指定链小铺 HTTPS 地址".to_string());
     }
     open::that_detached(parsed.as_str()).map_err(|error| format!("无法打开浏览器: {error}"))
 }
@@ -197,8 +187,8 @@ async fn load_tokens(client: &Client, user_id: i64) -> Result<Vec<PortalToken>, 
 
 async fn ensure_api_key(client: &Client, user_id: i64) -> Result<String, String> {
     let mut tokens = load_tokens(client, user_id).await?;
-    let token_id = match tokens.iter().find(|token| token.status == 1) {
-        Some(token) => token.id,
+    let token_id = match active_desktop_token_id(&tokens)? {
+        Some(id) => id,
         None => {
             let _ = request_json::<Value>(
                 client,
@@ -206,7 +196,7 @@ async fn ensure_api_key(client: &Client, user_id: i64) -> Result<String, String>
                 "/api/token/",
                 Some(user_id),
                 Some(json!({
-                    "name": "WBoke Desktop",
+                    "name": DESKTOP_TOKEN_NAME,
                     "expired_time": -1,
                     "unlimited_quota": true,
                     "model_limits_enabled": false
@@ -216,7 +206,7 @@ async fn ensure_api_key(client: &Client, user_id: i64) -> Result<String, String>
             tokens = load_tokens(client, user_id).await?;
             tokens
                 .iter()
-                .find(|token| token.status == 1)
+                .find(|token| token.status == 1 && token.name == DESKTOP_TOKEN_NAME)
                 .map(|token| token.id)
                 .ok_or_else(|| "无法创建桌面端 API Key".to_string())?
         }
@@ -263,12 +253,8 @@ async fn build_snapshot(client: &Client, user_id: i64) -> Result<DashboardSnapsh
             group: user.group,
             balance_cny,
             api_key_masked: mask_key(&api_key),
-            api_key,
-            base_url: API_BASE_URL.to_string(),
-            group_multiplier: 1.0,
+            base_url: tool_config::OPENAI_BASE_URL.to_string(),
         },
-        models: Vec::new(),
-        usage: Vec::new(),
         synced_at: "刚刚".to_string(),
     })
 }
@@ -375,151 +361,6 @@ async fn desktop_logout(state: tauri::State<'_, AuthState>) -> Result<(), String
     Ok(())
 }
 
-fn user_home() -> Result<PathBuf, String> {
-    std::env::var_os("USERPROFILE")
-        .or_else(|| std::env::var_os("HOME"))
-        .map(PathBuf::from)
-        .ok_or_else(|| "无法确定用户目录".to_string())
-}
-
-fn timestamp() -> Result<u64, String> {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|value| value.as_secs())
-        .map_err(|_| "系统时间无效".to_string())
-}
-
-fn write_with_backup(path: &Path, content: &str) -> Result<Option<PathBuf>, String> {
-    let parent = path.parent().ok_or_else(|| "配置路径无效".to_string())?;
-    fs::create_dir_all(parent).map_err(|error| format!("无法创建配置目录: {error}"))?;
-    let backup = if path.exists() {
-        let file_name = path.file_name().and_then(|value| value.to_str()).ok_or_else(|| "配置文件名无效".to_string())?;
-        let backup_path = parent.join(format!("{file_name}.wboke-backup-{}", timestamp()?));
-        fs::copy(path, &backup_path).map_err(|error| format!("无法备份原配置: {error}"))?;
-        Some(backup_path)
-    } else {
-        None
-    };
-    fs::write(path, content).map_err(|error| format!("无法应用配置: {error}"))?;
-    Ok(backup)
-}
-
-fn read_json_object(path: &Path) -> Result<serde_json::Map<String, Value>, String> {
-    if !path.exists() {
-        return Ok(serde_json::Map::new());
-    }
-    let text = fs::read_to_string(path).map_err(|error| format!("无法读取现有配置: {error}"))?;
-    serde_json::from_str::<Value>(&text)
-        .map_err(|_| "现有配置不是有效 JSON，请先修复后重试".to_string())?
-        .as_object()
-        .cloned()
-        .ok_or_else(|| "现有配置必须是 JSON 对象".to_string())
-}
-
-fn upsert_codex_provider(existing: &str) -> String {
-    let mut kept = Vec::new();
-    let mut skipping_wboke = false;
-    for line in existing.lines() {
-        let trimmed = line.trim();
-        if trimmed == "[model_providers.wboke]" {
-            skipping_wboke = true;
-            continue;
-        }
-        if skipping_wboke && trimmed.starts_with('[') {
-            skipping_wboke = false;
-        }
-        if skipping_wboke || trimmed.starts_with("model_provider =") {
-            continue;
-        }
-        kept.push(line);
-    }
-    let remainder = kept.join("\n").trim().to_string();
-    format!(
-        "model_provider = \"wboke\"\n{}{}\n\n[model_providers.wboke]\nname = \"WBoke API\"\nbase_url = \"{}\"\nwire_api = \"responses\"\nrequires_openai_auth = true\n",
-        if remainder.is_empty() { "" } else { "\n" },
-        remainder,
-        API_BASE_URL
-    )
-}
-
-fn apply_codex_config(api_key: &str) -> Result<ConfigApplyResult, String> {
-    let root = user_home()?.join(".codex");
-    let config_path = root.join("config.toml");
-    let auth_path = root.join("auth.json");
-    let existing = if config_path.exists() {
-        fs::read_to_string(&config_path).map_err(|error| format!("无法读取 Codex 配置: {error}"))?
-    } else {
-        String::new()
-    };
-    let mut backups = Vec::new();
-    if let Some(path) = write_with_backup(&config_path, &upsert_codex_provider(&existing))? {
-        backups.push(path.display().to_string());
-    }
-    let mut auth = read_json_object(&auth_path)?;
-    auth.insert("OPENAI_API_KEY".to_string(), Value::String(api_key.to_string()));
-    let auth_text = serde_json::to_string_pretty(&auth).map_err(|_| "无法生成 Codex 登录配置".to_string())?;
-    if let Some(path) = write_with_backup(&auth_path, &format!("{auth_text}\n"))? {
-        backups.push(path.display().to_string());
-    }
-    Ok(ConfigApplyResult {
-        tool_id: "codex-cli".to_string(),
-        written_files: vec![config_path.display().to_string(), auth_path.display().to_string()],
-        backup_files: backups,
-    })
-}
-
-fn apply_claude_config(api_key: &str) -> Result<ConfigApplyResult, String> {
-    let path = user_home()?.join(".claude").join("settings.json");
-    let mut root = read_json_object(&path)?;
-    let env = root.entry("env".to_string()).or_insert_with(|| json!({}));
-    let env = env.as_object_mut().ok_or_else(|| "Claude 配置中的 env 必须是对象".to_string())?;
-    env.insert("ANTHROPIC_AUTH_TOKEN".to_string(), Value::String(api_key.to_string()));
-    env.insert("ANTHROPIC_BASE_URL".to_string(), Value::String("https://api.wboke.com".to_string()));
-    let text = serde_json::to_string_pretty(&root).map_err(|_| "无法生成 Claude 配置".to_string())?;
-    let backup = write_with_backup(&path, &format!("{text}\n"))?;
-    Ok(ConfigApplyResult {
-        tool_id: "claude-code".to_string(),
-        written_files: vec![path.display().to_string()],
-        backup_files: backup.into_iter().map(|value| value.display().to_string()).collect(),
-    })
-}
-
-fn upsert_env(existing: &str, values: &[(&str, &str)]) -> String {
-    let keys: Vec<&str> = values.iter().map(|(key, _)| *key).collect();
-    let mut lines: Vec<String> = existing
-        .lines()
-        .filter(|line| !keys.iter().any(|key| line.trim_start().starts_with(&format!("{key}="))))
-        .map(str::to_string)
-        .collect();
-    if !lines.is_empty() && !lines.last().is_some_and(|line| line.is_empty()) {
-        lines.push(String::new());
-    }
-    lines.extend(values.iter().map(|(key, value)| format!("{key}={value}")));
-    format!("{}\n", lines.join("\n"))
-}
-
-fn apply_gemini_config(api_key: &str) -> Result<ConfigApplyResult, String> {
-    let path = user_home()?.join(".gemini").join(".env");
-    let existing = if path.exists() {
-        fs::read_to_string(&path).map_err(|error| format!("无法读取 Gemini 配置: {error}"))?
-    } else {
-        String::new()
-    };
-    let content = upsert_env(
-        &existing,
-        &[
-            ("GEMINI_API_KEY", api_key),
-            ("GOOGLE_GEMINI_BASE_URL", API_BASE_URL),
-        ],
-    );
-    let backup = write_with_backup(&path, &content)?;
-    Ok(ConfigApplyResult {
-        tool_id: "gemini-cli".to_string(),
-        written_files: vec![path.display().to_string()],
-        backup_files: backup.into_iter().map(|value| value.display().to_string()).collect(),
-    })
-}
-
 #[tauri::command]
 async fn apply_tool_config(
     state: tauri::State<'_, AuthState>,
@@ -528,12 +369,12 @@ async fn apply_tool_config(
     let session = current_session(&state)?;
     let user_id = session.user_id.ok_or_else(|| "请先完成登录".to_string())?;
     let api_key = ensure_api_key(&session.client, user_id).await?;
-    match tool_id.as_str() {
-        "codex-cli" => apply_codex_config(&api_key),
-        "claude-code" => apply_claude_config(&api_key),
-        "gemini-cli" => apply_gemini_config(&api_key),
-        _ => Err("不支持的配置目标".to_string()),
-    }
+    tool_config::apply_tool(&tool_id, &api_key)
+}
+
+#[tauri::command]
+fn restore_tool_config(tool_id: String) -> Result<RestoreResult, String> {
+    tool_config::restore_tool(&tool_id)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -548,7 +389,8 @@ pub fn run() {
             desktop_verify_two_factor,
             desktop_sync,
             desktop_logout,
-            apply_tool_config
+            apply_tool_config,
+            restore_tool_config
         ])
         .run(tauri::generate_context!())
         .expect("failed to run WBoke desktop");
@@ -556,37 +398,30 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::{mask_key, upsert_codex_provider, upsert_env};
+    use super::{active_desktop_token_id, mask_key, PortalToken, DESKTOP_TOKEN_NAME};
 
     #[test]
-    fn replaces_existing_codex_provider_without_touching_other_sections() {
-        let input = r#"model_provider = "old"
-model = "gpt-test"
-
-[model_providers.wboke]
-name = "Old WBoke"
-base_url = "https://old.example/v1"
-
-[mcp_servers.demo]
-command = "demo"
-"#;
-        let result = upsert_codex_provider(input);
-        assert!(result.starts_with("model_provider = \"wboke\""));
-        assert_eq!(result.matches("[model_providers.wboke]").count(), 1);
-        assert!(result.contains("[mcp_servers.demo]"));
-        assert!(result.contains("model = \"gpt-test\""));
-        assert!(!result.contains("old.example"));
+    fn selects_only_the_dedicated_desktop_token() {
+        let tokens = vec![
+            PortalToken { id: 1, status: 1, name: "personal".to_string() },
+            PortalToken { id: 2, status: 1, name: DESKTOP_TOKEN_NAME.to_string() },
+        ];
+        assert_eq!(active_desktop_token_id(&tokens).expect("valid tokens"), Some(2));
     }
 
     #[test]
-    fn replaces_only_managed_environment_keys() {
-        let result = upsert_env(
-            "OTHER=value\nGEMINI_API_KEY=old\n",
-            &[("GEMINI_API_KEY", "new"), ("GOOGLE_GEMINI_BASE_URL", "https://api.wboke.com/v1")],
-        );
-        assert!(result.contains("OTHER=value"));
-        assert!(!result.contains("GEMINI_API_KEY=old"));
-        assert!(result.contains("GEMINI_API_KEY=new"));
+    fn rejects_duplicate_dedicated_desktop_tokens() {
+        let tokens = vec![
+            PortalToken { id: 1, status: 1, name: DESKTOP_TOKEN_NAME.to_string() },
+            PortalToken { id: 2, status: 1, name: DESKTOP_TOKEN_NAME.to_string() },
+        ];
+        assert!(active_desktop_token_id(&tokens).is_err());
+    }
+
+    #[test]
+    fn ignores_disabled_dedicated_desktop_tokens() {
+        let tokens = vec![PortalToken { id: 1, status: 0, name: DESKTOP_TOKEN_NAME.to_string() }];
+        assert_eq!(active_desktop_token_id(&tokens).expect("valid tokens"), None);
     }
 
     #[test]
