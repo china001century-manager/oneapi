@@ -1,18 +1,18 @@
-# WBoke API Platform Design
+# 六脉神剑API Platform Design
 
 ## Product boundary
 
-WBoke is an invitation-only commercial API service operated by a Hong Kong company. Users register with a personal email verification code and invitation code, buy prepaid redemption codes from the company's approved Lianxiaopu storefront, and redeem them on `www.wboke.com`.
+六脉神剑API is a commercial API service intended for operation by a Hong Kong company. Users register publicly with a personal-email verification code; an invitation code is optional. They buy prepaid redemption codes from the company's approved Lianxiaopu storefront and redeem them on `www.wboke.com`.
 
 New API remains the account, token, quota, model-pricing, channel-routing, usage-log, and redemption data source. WBoke does not fork its relay core. The desktop app is a companion for account visibility and safe developer-tool configuration; it is not a chat client, local proxy, or payment processor.
 
 ## Fixed origins
 
 - Account, registration, recharge, redemption: `https://www.wboke.com`
-- OpenAI-compatible gateway: `https://api.wboke.com/v1`
-- Desktop updates: `https://www.wboke.com/downloads/desktop`
+- OpenAI-compatible gateway: `https://www.wboke.com/v1`
+- Planned desktop updates: `https://www.wboke.com/downloads/desktop`
 
-The desktop app does not accept arbitrary API origins. External links are restricted to HTTPS pages under `wboke.com`.
+The desktop app does not accept arbitrary API origins. External links are restricted to HTTPS pages under `wboke.com` and the approved Lianxiaopu storefront.
 
 ## Commercial model
 
